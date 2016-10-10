@@ -19,7 +19,6 @@ public class PinActivity extends AppCompatActivity {
     public static final String EXTRA_ERROR = "extra_error";
     public static final String OPER_CREATE = "oper_create";
     public static final String OPER_VERIFY = "oper_verify";
-    private static final String PREF_SESSION = "pref_session";
     private String oper;
     private String session;
     private TextView msg;
@@ -66,22 +65,12 @@ public class PinActivity extends AppCompatActivity {
                 msg.setText(R.string.create_code);
                 return;
             }
-            try {
-                String encoded = Crypter.encrypt(session, pin.toString());
-                preferences.edit().putString(PREF_SESSION, encoded).apply();
-                sendOk();
-            } catch (Exception e) {
-                e.printStackTrace();
-                sendErr(e.getMessage());
-            }
+            boolean b = new PinFacade(this).setupPin(pin.toString(), session);
+            if (b) sendOk();
+            else sendErr("can't setup pin");
         } else if (OPER_VERIFY.equals(oper)){
-            String encoded = preferences.getString(PREF_SESSION, null);
-            if (encoded == null) {
-                sendErr("session not found");
-                return;
-            }
             try {
-                session = Crypter.decrypt(encoded, pin.toString());
+                session = new PinFacade(this).verifyPin(pin.toString());
                 sendOk();
             } catch (Exception e) {
                 e.printStackTrace();
